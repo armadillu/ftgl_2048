@@ -28,6 +28,7 @@
 
 #include <cassert>
 #include <string> // For memset
+#include <iostream>
 
 #include "FTGL/ftgl.h"
 
@@ -41,10 +42,11 @@
 //  FTTextureFont
 //
 
+using namespace std;
 
 FTTextureFont::FTTextureFont(char const *fontFilePath) :
     FTFont(new FTTextureFontImpl(this, fontFilePath))
-{}
+{  }
 
 
 FTTextureFont::FTTextureFont(const unsigned char *pBufferBytes,
@@ -101,6 +103,7 @@ FTTextureFontImpl::FTTextureFontImpl(FTFont *ftFont, const char* fontFilePath)
 {
     load_flags = FT_LOAD_NO_HINTING | FT_LOAD_NO_BITMAP;
     remGlyphs = numGlyphs = face.GlyphCount();
+
 }
 
 
@@ -177,6 +180,7 @@ void FTTextureFontImpl::CalculateTextureSize()
         assert(maximumGLTextureSize); // If you hit this then you have an invalid OpenGL context.
     }
 
+	
     textureWidth = NextPowerOf2((remGlyphs * glyphWidth) + (padding * 2));
     textureWidth = textureWidth > maximumGLTextureSize ? maximumGLTextureSize : textureWidth;
 
@@ -184,6 +188,11 @@ void FTTextureFontImpl::CalculateTextureSize()
 
     textureHeight = NextPowerOf2(((numGlyphs / h) + 1) * glyphHeight);
     textureHeight = textureHeight > maximumGLTextureSize ? maximumGLTextureSize : textureHeight;
+    
+   	//oriol limiting first texture size, 16000x16000 is quite insane
+   	textureWidth = min(textureWidth, 1024);
+   	textureHeight = min(textureHeight, 1024);
+
 }
 
 
@@ -203,6 +212,8 @@ GLuint FTTextureFontImpl::CreateTexture()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	printf("FTGL creating GL texture %d x %d\n", (int)textureWidth, (int)textureHeight); //oriol
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, textureWidth, textureHeight,
                  0, GL_ALPHA, GL_UNSIGNED_BYTE, textureMemory);
